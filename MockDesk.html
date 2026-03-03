@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SSC Final Mock Engine</title>
+
+<style>
+body{
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:#fff;
+}
+
+.hidden{display:none;}
+
+#setupPage,#examPage,#summaryPage,#resultPage{
+padding:25px;
+}
+
+textarea{
+width:100%;
+height:220px;
+background:#111827;
+color:#fff;
+border-radius:12px;
+border:1px solid #334155;
+padding:12px;
+}
+
+select,input{
+padding:6px;
+border-radius:8px;
+border:none;
+margin-right:8px;
+}
+
+button{
+padding:8px 16px;
+border-radius:10px;
+border:none;
+cursor:pointer;
+background:#2563eb;
+color:#fff;
+margin:5px;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+background:#1e293b;
+padding:12px;
+border-radius:12px;
+}
+
+.container{
+display:flex;
+margin-top:15px;
+}
+
+.palette{
+width:260px;
+max-height:70vh;
+overflow:auto;
+background:#1e293b;
+padding:10px;
+border-radius:12px;
+}
+
+.palette button{
+width:42px;
+height:42px;
+margin:4px;
+border-radius:6px;
+border:none;
+font-weight:bold;
+}
+
+.notvisited{background:#475569;}
+.notanswered{background:#dc2626;}
+.answered{background:#16a34a;}
+.reviewonly{background:#9333ea;}
+.answeredreview{background:#2563eb;}
+.active{outline:2px solid white;}
+
+.main{
+flex:1;
+margin-left:15px;
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+}
+
+.option{
+background:#334155;
+padding:10px;
+margin:8px 0;
+border-radius:6px;
+cursor:pointer;
+}
+
+.correctOption{background:#16a34a !important;}
+.wrongOption{background:#dc2626 !important;}
+
+.summaryGrid{
+display:grid;
+grid-template-columns:repeat(10,1fr);
+gap:5px;
+margin-top:10px;
+}
+.summaryGrid div{
+padding:8px;
+text-align:center;
+border-radius:6px;
+}
+</style>
+</head>
+<body>
+
+<div id="setupPage">
+<h2>Paste Questions (Question + Answer)</h2>
+<textarea id="qaInput"></textarea><br><br>
+
+Mode:
+<select id="mode">
+<option value="mcq">MCQ</option>
+<option value="fill">Fill in Blank</option>
+<option value="study">Study Mode</option>
+</select>
+
+Order:
+<select id="orderMode">
+<option value="sequential">Sequential</option>
+<option value="random">Random</option>
+</select>
+
+Timer:
+<select id="duration">
+<option value="600">10 Minutes</option>
+<option value="1800">30 Minutes</option>
+<option value="3600">60 Minutes</option>
+<option value="7200">120 Minutes</option>
+</select>
+
+Negative Mark:
+<select id="negMark">
+<option value="0">0</option>
+<option value="0.25">0.25</option>
+<option value="0.5">0.5</option>
+<option value="1">1</option>
+</select>
+
+<br><br>
+<label><input type="checkbox" id="instantFeedback"> Instant Feedback</label>
+<label><input type="checkbox" id="autoNext"> Auto Next</label>
+
+<br><br>
+<button onclick="startExam()">Start Exam</button>
+</div>
+
+<div id="examPage" class="hidden">
+
+<div class="header">
+<div id="timer"></div>
+<div id="legendCounts"></div>
+</div>
+
+<div class="container">
+
+<div class="palette" id="palette"></div>
+
+<div class="main">
+<h3 id="questionText"></h3>
+<div id="options"></div>
+<div id="feedback"></div>
+
+<button onclick="prevQuestion()">Previous</button>
+<button onclick="nextQuestion()">Next</button>
+<button onclick="markReview()">Mark for Review</button>
+<button onclick="openSummary()">Submit</button>
+</div>
+
+</div>
+</div>
+
+<div id="summaryPage" class="hidden">
+<h2>Review Before Final Submit</h2>
+<div id="summaryCounts"></div>
+<div class="summaryGrid" id="summaryGrid"></div>
+<button onclick="finalSubmit()">Final Submit</button>
+</div>
+
+<div id="resultPage" class="hidden">
+<h2>Result</h2>
+<div id="resultStats"></div>
+<button onclick="restartExam()">Restart</button>
+</div>
+
+<script>
+
+let questions=[];
+let answers=[];
+let reviewFlags=[];
+let visited=[];
+let current=0;
+let timerInterval;
+let totalSeconds=0;
+let negative=0;
+let mode="mcq";
+let instant=false;
+let autoNext=false;
+
+function startExam(){
+
+questions=[];
+let raw=document.getElementById("qaInput").value.trim();
+let blocks=raw.split(/\n\s*\n/);
+
+blocks.forEach(block=>{
+let lines=block.split("\n").map(x=>x.trim()).filter(x=>x!=="");
+if(lines.length===2){
+questions.push({q:lines[0],a:lines[1]});
+}
+});
+
+if(questions.length===0){alert("Invalid format");return;}
+
+if(document.getElementById("orderMode").value==="random"){
+questions.sort(()=>0.5-Math.random());
+}
+
+answers=new Array(questions.length).fill(null);
+reviewFlags=new Array(questions.length).fill(false);
+visited=new Array(questions.length).fill(false);
+
+negative=parseFloat(document.getElementById("negMark").value);
+mode=document.getElementById("mode").value;
+instant=document.getElementById("instantFeedback").checked;
+autoNext=document.getElementById("autoNext").checked;
+
+current=0;
+
+document.getElementById("setupPage").classList.add("hidden");
+document.getElementById("examPage").classList.remove("hidden");
+
+buildPalette();
+loadQuestion();
+startTimer();
+}
+
+function buildPalette(){
+let p=document.getElementById("palette");
+p.innerHTML="";
+for(let i=0;i<questions.length;i++){
+let btn=document.createElement("button");
+btn.innerText=i+1;
+btn.onclick=function(){goTo(i)};
+p.appendChild(btn);
+}
+updatePalette();
+}
+
+function getState(i){
+if(!visited[i]) return "notvisited";
+if(visited[i] && !answers[i] && !reviewFlags[i]) return "notanswered";
+if(answers[i] && !reviewFlags[i]) return "answered";
+if(!answers[i] && reviewFlags[i]) return "reviewonly";
+if(answers[i] && reviewFlags[i]) return "answeredreview";
+}
+
+function updatePalette(){
+
+let btns=document.getElementById("palette").children;
+let counts={
+notvisited:0,
+notanswered:0,
+answered:0,
+reviewonly:0,
+answeredreview:0
+};
+
+for(let i=0;i<btns.length;i++){
+let state=getState(i);
+btns[i].className=state;
+if(i===current) btns[i].classList.add("active");
+counts[state]++;
+}
+
+document.getElementById("legendCounts").innerText=
+"Not Visited: "+counts.notvisited+
+" | Not Answered: "+counts.notanswered+
+" | Answered: "+counts.answered+
+" | Marked for Review Only: "+counts.reviewonly+
+" | Answered + Marked for Review: "+counts.answeredreview;
+}
+
+function loadQuestion(){
+
+visited[current]=true;
+
+document.getElementById("questionText").innerText=
+"Q"+(current+1)+" / "+questions.length+"  "+questions[current].q;
+
+let optDiv=document.getElementById("options");
+optDiv.innerHTML="";
+document.getElementById("feedback").innerText="";
+
+let options=[questions[current].a];
+while(options.length<4){
+let rand=questions[Math.floor(Math.random()*questions.length)].a;
+if(!options.includes(rand)) options.push(rand);
+}
+options.sort(()=>Math.random()-0.5);
+
+options.forEach(opt=>{
+let div=document.createElement("div");
+div.className="option";
+div.innerText=opt;
+
+div.onclick=function(){
+answers[current]=opt;
+updatePalette();
+
+if(instant){
+if(opt===questions[current].a){
+div.classList.add("correctOption");
+document.getElementById("feedback").innerText="Correct";
+}else{
+div.classList.add("wrongOption");
+document.getElementById("feedback").innerText="Wrong | Correct: "+questions[current].a;
+}
+}
+
+if(autoNext && current<questions.length-1){
+setTimeout(nextQuestion,300);
+}
+};
+
+optDiv.appendChild(div);
+});
+
+updatePalette();
+}
+
+function goTo(i){current=i;loadQuestion();}
+function nextQuestion(){if(current<questions.length-1){current++;loadQuestion();}}
+function prevQuestion(){if(current>0){current--;loadQuestion();}}
+
+function markReview(){
+reviewFlags[current]=!reviewFlags[current];
+updatePalette();
+}
+
+function openSummary(){
+clearInterval(timerInterval);
+document.getElementById("examPage").classList.add("hidden");
+document.getElementById("summaryPage").classList.remove("hidden");
+
+let grid=document.getElementById("summaryGrid");
+grid.innerHTML="";
+
+for(let i=0;i<questions.length;i++){
+let cell=document.createElement("div");
+cell.className=getState(i);
+cell.innerText=i+1;
+grid.appendChild(cell);
+}
+}
+
+function finalSubmit(){
+
+document.getElementById("summaryPage").classList.add("hidden");
+document.getElementById("resultPage").classList.remove("hidden");
+
+let correct=0,wrong=0;
+questions.forEach((q,i)=>{
+if(answers[i]===q.a) correct++;
+else if(answers[i]!=null) wrong++;
+});
+
+let score=correct-(wrong*negative);
+
+document.getElementById("resultStats").innerHTML=
+"Total Questions: "+questions.length+"<br>"+
+"Correct: "+correct+"<br>"+
+"Wrong: "+wrong+"<br>"+
+"Score: "+score.toFixed(2);
+}
+
+function restartExam(){
+
+clearInterval(timerInterval);
+
+questions=[];
+answers=[];
+reviewFlags=[];
+visited=[];
+current=0;
+
+document.getElementById("resultPage").classList.add("hidden");
+document.getElementById("summaryPage").classList.add("hidden");
+document.getElementById("examPage").classList.add("hidden");
+
+document.getElementById("setupPage").classList.remove("hidden");
+
+document.getElementById("qaInput").value="";
+document.getElementById("timer").innerText="";
+document.getElementById("legendCounts").innerText="";
+}
+
+function startTimer(){
+totalSeconds=parseInt(document.getElementById("duration").value);
+timerInterval=setInterval(()=>{
+if(totalSeconds<=0){
+clearInterval(timerInterval);
+openSummary();
+return;
+}
+totalSeconds--;
+let m=Math.floor(totalSeconds/60);
+let s=totalSeconds%60;
+document.getElementById("timer").innerText=
+"Time Left: "+m+":"+(s<10?"0":"")+s;
+},1000);
+}
+
+</script>
+</body>
+</html>
