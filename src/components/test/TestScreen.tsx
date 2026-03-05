@@ -104,11 +104,11 @@ export default function TestScreen({
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
         {/* Main Question Area */}
-        <div className="flex-1 p-8 overflow-y-auto">
+        <div className="flex-1 p-4 lg:p-8 overflow-y-auto">
           <div className="max-w-3xl mx-auto animate-fade-in-up" key={q.id}>
-            <div className="card-3d-elevated p-8">
+            <div className="card-3d-elevated p-5 lg:p-8">
               {/* Question Header */}
               <div className="flex items-center gap-3 mb-6">
                 <span className="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-lg">
@@ -252,7 +252,7 @@ export default function TestScreen({
 
         {/* Palette Sidebar */}
         {showPalette && (
-          <div className="w-72 border-l border-border bg-card/50 p-6 overflow-y-auto shrink-0">
+          <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-border bg-card/50 p-6 overflow-y-auto shrink-0">
             {/* Legend */}
             <div className="space-y-2 mb-6 text-xs">
               {[
@@ -271,7 +271,7 @@ export default function TestScreen({
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-5 gap-2">
               {questions.map((qq, i) => {
                 const status = getPaletteStatus(qq.id, answers, marked, visited);
                 const colorMap: Record<string, string> = {
