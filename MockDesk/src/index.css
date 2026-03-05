@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+    --primary: 190 90% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 220 25% 15%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 260 60% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 190 90% 42%;
+    --radius: 0.75rem;
+
+    --chart-correct: 152 60% 42%;
+    --chart-wrong: 0 72% 51%;
+    --chart-unanswered: 220 10% 55%;
+    --chart-line: 190 90% 50%;
+
+    --palette-not-visited: 220 15% 88%;
+    --palette-not-answered: 0 72% 55%;
+    --palette-answered: 152 60% 42%;
+    --palette-review: 260 60% 55%;
+    --palette-answered-review: 38 92% 50%;
+
+    --glow-primary: 190 90% 50%;
+    --glow-success: 152 60% 50%;
+    --glow-submit: 38 92% 55%;
+  }
+
+  .dark {
+    --background: 222 30% 8%;
+    --foreground: 210 20% 92%;
+    --card: 222 25% 12%;
+    --card-foreground: 210 20% 92%;
+    --popover: 222 25% 12%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 190 90% 50%;
+    --primary-foreground: 222 30% 8%;
+    --secondary: 222 20% 18%;
+    --secondary-foreground: 210 20% 88%;
+    --muted: 222 20% 16%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 270 65% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 48%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 10%;
+    --border: 222 20% 20%;
+    --input: 222 20% 20%;
+    --ring: 190 90% 50%;
+
+    --chart-correct: 152 60% 48%;
+    --chart-wrong: 0 72% 55%;
+    --chart-unanswered: 220 15% 45%;
+    --chart-line: 190 90% 55%;
+
+    --palette-not-visited: 222 20% 22%;
+    --palette-not-answered: 0 72% 50%;
+    --palette-answered: 152 60% 45%;
+    --palette-review: 270 65% 55%;
+    --palette-answered-review: 38 92% 50%;
+
+    --glow-primary: 190 90% 55%;
+    --glow-success: 152 60% 55%;
+    --glow-submit: 38 92% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  code, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .card-3d {
+    @apply rounded-xl border border-border bg-card shadow-lg;
+    box-shadow:
+      0 4px 6px -1px hsl(var(--primary) / 0.05),
+      0 10px 30px -5px hsl(var(--background) / 0.4),
+      inset 0 1px 0 hsl(var(--foreground) / 0.04);
+  }
+  .card-3d-elevated {
+    @apply card-3d;
+    box-shadow:
+      0 8px 25px -5px hsl(var(--primary) / 0.12),
+      0 20px 50px -10px hsl(var(--background) / 0.5),
+      inset 0 1px 0 hsl(var(--foreground) / 0.06);
+  }
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.3), 0 0 60px hsl(var(--glow-primary) / 0.1);
+  }
+  .glow-success {
+    box-shadow: 0 0 20px hsl(var(--glow-success) / 0.3), 0 0 60px hsl(var(--glow-success) / 0.1);
+  }
+  .glow-submit {
+    animation: submitGlow 1.5s ease-in-out infinite alternate;
+  }
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+}
+
+@keyframes submitGlow {
+  0% { box-shadow: 0 0 10px hsl(var(--glow-submit) / 0.3); }
+  100% { box-shadow: 0 0 30px hsl(var(--glow-submit) / 0.6), 0 0 60px hsl(var(--glow-submit) / 0.2); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
